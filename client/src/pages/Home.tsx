@@ -60,7 +60,6 @@ export default function Home() {
             <div className="flex flex-col items-center gap-2">
               {ips.map((ip: string, index: number) => (
                 <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
-                  <div className={`w-2.5 h-2.5 rounded-full ${ipData.isAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
                   <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-ip-address-${index}`}>
                     {ip}
                   </span>
