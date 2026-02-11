@@ -34,6 +34,21 @@ export const api = {
       },
     },
   },
+  server: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/server-ip' as const,
+      responses: {
+        200: z.object({
+          ips: z.array(z.object({
+            address: z.string(),
+            type: z.string(),
+            interface: z.string(),
+          })),
+        }),
+      },
+    },
+  },
   names: {
     generate: {
       method: 'POST' as const,

@@ -1,21 +1,39 @@
 import { useIp } from "@/hooks/use-ip";
 import { GeneratorForm } from "@/components/GeneratorForm";
 import { useState } from "react";
-import { Loader2, ShieldAlert, ShieldCheck, Terminal, Copy, Check } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, ShieldAlert, ShieldCheck, Terminal, Server, Copy, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
+import { api } from "@shared/routes";
 
 export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
+  const { data: serverData } = useQuery({
+    queryKey: [api.server.get.path],
+    queryFn: async () => {
+      const res = await fetch(api.server.get.path);
+      if (!res.ok) throw new Error("Failed to fetch server IP");
+      return api.server.get.responses[200].parse(await res.json());
+    },
+  });
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedServerIndex, setCopiedServerIndex] = useState<number | null>(null);
 
   const ipDetails = ipData?.ips || [];
+  const serverIps = serverData?.ips || [];
 
   const copyIp = (ip: string, index: number) => {
     navigator.clipboard.writeText(ip);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const copyServerIp = (ip: string, index: number) => {
+    navigator.clipboard.writeText(ip);
+    setCopiedServerIndex(index);
+    setTimeout(() => setCopiedServerIndex(null), 2000);
   };
 
   if (isLoading) {
@@ -86,6 +104,46 @@ export default function Home() {
             )}
           </div>
         </motion.div>
+
+        {/* Server Identity Section */}
+        {serverIps.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+            className="text-center mb-16 space-y-4"
+          >
+            <div className="inline-flex items-center gap-2">
+              <Server className="w-4 h-4 text-zinc-500" />
+              <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
+                {t("server.title")}
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              {serverIps.map((sip, index) => (
+                <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
+                  <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-server-ip-${index}`}>
+                    {sip.address}
+                  </span>
+                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded" data-testid={`text-server-ip-type-${index}`}>
+                    {sip.type}
+                  </span>
+                  <span className="text-xs text-zinc-600 bg-zinc-800/50 px-2 py-0.5 rounded" data-testid={`text-server-ip-iface-${index}`}>
+                    {sip.interface}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => copyServerIp(sip.address, index)}
+                    data-testid={`button-copy-server-ip-${index}`}
+                  >
+                    {copiedServerIndex === index ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Content */}
         <motion.div

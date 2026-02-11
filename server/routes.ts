@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
 import dns from "dns/promises";
+import os from "os";
 
 // Initialize OpenAI client - supports own API key via OPENAI_API_KEY or Replit AI Integrations
 const openaiConfig: { apiKey?: string; baseURL?: string } = {};
@@ -72,6 +73,23 @@ export async function registerRoutes(
     }));
 
     res.json({ ip: ips.join(', '), isAllowed, ips: ipDetails });
+  });
+
+  app.get(api.server.get.path, (_req, res) => {
+    const interfaces = os.networkInterfaces();
+    const serverIps: { address: string; type: string; interface: string }[] = [];
+    for (const [name, addrs] of Object.entries(interfaces)) {
+      if (!addrs) continue;
+      for (const addr of addrs) {
+        if (addr.family === 'IPv6' && addr.address.startsWith('fe80')) continue;
+        serverIps.push({
+          address: addr.address,
+          type: classifyIp(addr.address),
+          interface: name,
+        });
+      }
+    }
+    res.json({ ips: serverIps });
   });
 
   app.post(api.names.generate.path, async (req, res) => {
