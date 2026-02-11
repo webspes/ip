@@ -1,10 +1,20 @@
 import { useIp } from "@/hooks/use-ip";
 import { GeneratorForm } from "@/components/GeneratorForm";
-import { Loader2, ShieldAlert, ShieldCheck, Terminal } from "lucide-react";
+import { useState } from "react";
+import { Loader2, ShieldAlert, ShieldCheck, Terminal, Copy, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
+  const [copied, setCopied] = useState(false);
+
+  const copyIp = () => {
+    if (!ipData?.ip) return;
+    navigator.clipboard.writeText(ipData.ip);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (isLoading) {
     return (
@@ -48,9 +58,17 @@ export default function Home() {
             </span>
             <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
               <div className={`w-2.5 h-2.5 rounded-full ${ipData.isAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-              <span className="font-mono text-lg sm:text-xl text-zinc-200">
+              <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid="text-ip-address">
                 {ipData.ip}
               </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={copyIp}
+                data-testid="button-copy-ip"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              </Button>
             </div>
             {ipData.isAllowed && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">
