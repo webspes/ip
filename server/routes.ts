@@ -49,21 +49,23 @@ export async function registerRoutes(
     console.log('✓ Using Replit AI Integrations for OpenAI');
   }
 
-  // Helper to get all IPs
-  const getIps = (req: any): string[] => {
+  // Helper to get visitor IPs (from x-forwarded-for only, not the socket which is the server's own interface)
+  const getVisitorIps = (req: any): string[] => {
     const forwarded = req.headers['x-forwarded-for'];
     const ips: string[] = [];
     if (forwarded) {
       const parts = typeof forwarded === 'string' ? forwarded : forwarded[0];
       parts.split(',').map((s: string) => s.trim()).filter(Boolean).forEach((ip: string) => ips.push(ip));
     }
-    const remote = req.socket.remoteAddress;
-    if (remote && !ips.includes(remote)) ips.push(remote);
+    if (ips.length === 0) {
+      const remote = req.socket.remoteAddress;
+      if (remote) ips.push(remote);
+    }
     return ips.length > 0 ? ips : ['unknown'];
   };
 
   app.get(api.ip.get.path, (req, res) => {
-    const ips = getIps(req);
+    const ips = getVisitorIps(req);
     const allowedIp = process.env.ALLOWED_IP;
     const isAllowed = !!allowedIp && ips.some(ip => ip === allowedIp);
     
@@ -81,6 +83,7 @@ export async function registerRoutes(
     for (const [name, addrs] of Object.entries(interfaces)) {
       if (!addrs) continue;
       for (const addr of addrs) {
+        if (addr.address === '127.0.0.1' || addr.address === '::1') continue;
         if (addr.family === 'IPv6' && addr.address.startsWith('fe80')) continue;
         serverIps.push({
           address: addr.address,
@@ -94,7 +97,7 @@ export async function registerRoutes(
 
   app.post(api.names.generate.path, async (req, res) => {
     try {
-      const ips = getIps(req);
+      const ips = getVisitorIps(req);
       const allowedIp = process.env.ALLOWED_IP;
       
       if (!allowedIp || !ips.some(ip => ip === allowedIp)) {
