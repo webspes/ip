@@ -142,17 +142,29 @@ export async function registerRoutes(
       });
 
       const content = response.choices[0].message.content || "{\"names\": []}";
+      console.log("OpenAI raw response:", content);
       let names: string[] = [];
       try {
         const parsed = JSON.parse(content);
-        // Handle different possible JSON structures OpenAI might return
-        if (Array.isArray(parsed)) names = parsed;
-        else if (parsed.names && Array.isArray(parsed.names)) names = parsed.names;
-        else if (parsed.domains && Array.isArray(parsed.domains)) names = parsed.domains;
-        else names = [];
+        if (Array.isArray(parsed)) {
+          names = parsed.filter((v: unknown) => typeof v === 'string');
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          const values = Object.values(parsed);
+          for (const val of values) {
+            if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'string') {
+              names = val.filter((v: unknown) => typeof v === 'string');
+              break;
+            }
+          }
+        }
       } catch (e) {
-        console.error("Failed to parse OpenAI response", e);
+        console.error("Failed to parse OpenAI response:", content, e);
         return res.status(500).json({ message: "Failed to parse generated names" });
+      }
+
+      if (names.length === 0) {
+        console.warn("No names extracted from OpenAI response:", content);
+        return res.status(500).json({ message: "AI returned no valid names. Try again." });
       }
 
       // Check availability (DNS resolution)
