@@ -54,15 +54,10 @@ export default function Home() {
                 {ipData.ip}
               </span>
             </div>
-            {ipData.isAllowed ? (
+            {ipData.isAllowed && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">
                 <ShieldCheck className="w-3 h-3" />
                 Authorized Access
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500 bg-red-500/10 px-2 py-1 rounded">
-                <ShieldAlert className="w-3 h-3" />
-                Access Restricted
               </span>
             )}
           </div>
@@ -74,20 +69,7 @@ export default function Home() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          {ipData.isAllowed ? (
-            <GeneratorForm />
-          ) : (
-            <div className="max-w-md mx-auto text-center space-y-6 p-8 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20">
-              <ShieldAlert className="w-12 h-12 text-zinc-600 mx-auto" />
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-white">Access Denied</h2>
-                <p className="text-zinc-400">
-                  Your IP address does not match the allowed configuration. 
-                  This tool is restricted to authorized personnel only.
-                </p>
-              </div>
-            </div>
-          )}
+          {ipData.isAllowed && <GeneratorForm />}
         </motion.div>
         
         {/* Footer */}
