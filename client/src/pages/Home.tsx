@@ -74,7 +74,7 @@ export default function Home() {
         
         {/* Footer */}
         <footer className="mt-24 text-center text-zinc-600 text-sm">
-          <p>Powered by OpenAI & Whois API</p>
+          <p>Powered by humans</p>
         </footer>
       </div>
     </div>
