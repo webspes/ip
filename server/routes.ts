@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
+import { logNameIdea } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -47,12 +47,6 @@ export async function registerRoutes(
     console.log('✓ Using own OpenAI API key (OPENAI_API_KEY)');
   } else {
     console.log('✓ Using Replit AI Integrations for OpenAI');
-  }
-
-  if (!process.env.DATABASE_URL) {
-    console.warn('\x1b[33m⚠ WARNING: DATABASE_URL is not set. Name idea logging is disabled.\x1b[0m');
-  } else {
-    console.log('✓ Database connected (name idea logging enabled)');
   }
 
   // Helper to get visitor IPs (from x-forwarded-for only, not the socket which is the server's own interface)
@@ -172,16 +166,7 @@ export async function registerRoutes(
           }
         }
         
-        // Log to DB (optional, but defined in schema)
-        try {
-            await storage.logNameIdea({
-                prompt: topic,
-                generatedName: name,
-                isAvailable: available,
-            });
-        } catch (e) {
-            console.error("Failed to log name idea", e);
-        }
+        logNameIdea(topic, name, available);
 
         return { name, available };
       }));

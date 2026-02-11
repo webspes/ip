@@ -1,16 +1,25 @@
-import { db } from "./db";
-import { nameIdeas, type InsertNameIdea, type NameIdea } from "@shared/schema";
+import fs from "fs";
+import path from "path";
 
-export interface IStorage {
-  logNameIdea(idea: InsertNameIdea): Promise<NameIdea | null>;
+const LOG_FILE = path.join(process.cwd(), "name_ideas.log");
+
+export interface NameIdeaLog {
+  prompt: string;
+  generatedName: string;
+  isAvailable: boolean;
+  timestamp: string;
 }
 
-export class DatabaseStorage implements IStorage {
-  async logNameIdea(idea: InsertNameIdea): Promise<NameIdea | null> {
-    if (!db) return null;
-    const [log] = await db.insert(nameIdeas).values(idea).returning();
-    return log;
+export function logNameIdea(prompt: string, generatedName: string, isAvailable: boolean): void {
+  const entry: NameIdeaLog = {
+    prompt,
+    generatedName,
+    isAvailable,
+    timestamp: new Date().toISOString(),
+  };
+  try {
+    fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + "\n");
+  } catch {
+    // silently fail
   }
 }
-
-export const storage = new DatabaseStorage();
