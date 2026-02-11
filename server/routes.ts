@@ -77,7 +77,7 @@ export async function registerRoutes(
     res.json({ ip: ips.join(', '), isAllowed, ips: ipDetails });
   });
 
-  app.get(api.server.get.path, (_req, res) => {
+  app.get(api.server.get.path, async (_req, res) => {
     const interfaces = os.networkInterfaces();
     const serverIps: { address: string; type: string; interface: string }[] = [];
     for (const [name, addrs] of Object.entries(interfaces)) {
@@ -92,7 +92,19 @@ export async function registerRoutes(
         });
       }
     }
-    res.json({ ips: serverIps });
+
+    let outboundIp: string | null = null;
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      if (response.ok) {
+        const data = await response.json() as { ip: string };
+        outboundIp = data.ip;
+      }
+    } catch {
+      // silently fail
+    }
+
+    res.json({ outboundIp, ips: serverIps });
   });
 
   app.post(api.names.generate.path, async (req, res) => {

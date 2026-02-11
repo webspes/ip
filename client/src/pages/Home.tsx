@@ -20,9 +20,11 @@ export default function Home() {
   });
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedServerIndex, setCopiedServerIndex] = useState<number | null>(null);
+  const [copiedOutbound, setCopiedOutbound] = useState(false);
 
   const ipDetails = ipData?.ips || [];
   const serverIps = serverData?.ips || [];
+  const outboundIp = serverData?.outboundIp || null;
 
   const copyIp = (ip: string, index: number) => {
     navigator.clipboard.writeText(ip);
@@ -106,7 +108,7 @@ export default function Home() {
         </motion.div>
 
         {/* Server Identity Section */}
-        {serverIps.length > 0 && (
+        {(outboundIp || serverIps.length > 0) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -119,29 +121,61 @@ export default function Home() {
                 {t("server.title")}
               </span>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              {serverIps.map((sip, index) => (
-                <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
-                  <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-server-ip-${index}`}>
-                    {sip.address}
+
+            {outboundIp && (
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-zinc-500 text-xs uppercase tracking-wider">{t("server.outbound")}</span>
+                <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
+                  <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid="text-server-outbound-ip">
+                    {outboundIp}
                   </span>
-                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded" data-testid={`text-server-ip-type-${index}`}>
-                    {sip.type}
-                  </span>
-                  <span className="text-xs text-zinc-600 bg-zinc-800/50 px-2 py-0.5 rounded" data-testid={`text-server-ip-iface-${index}`}>
-                    {sip.interface}
+                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">
+                    public
                   </span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => copyServerIp(sip.address, index)}
-                    data-testid={`button-copy-server-ip-${index}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(outboundIp);
+                      setCopiedOutbound(true);
+                      setTimeout(() => setCopiedOutbound(false), 2000);
+                    }}
+                    data-testid="button-copy-outbound-ip"
                   >
-                    {copiedServerIndex === index ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    {copiedOutbound ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {serverIps.length > 0 && (
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-zinc-500 text-xs uppercase tracking-wider">{t("server.interfaces")}</span>
+                <div className="flex flex-col items-center gap-2">
+                  {serverIps.map((sip, index) => (
+                    <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
+                      <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-server-ip-${index}`}>
+                        {sip.address}
+                      </span>
+                      <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded" data-testid={`text-server-ip-type-${index}`}>
+                        {sip.type}
+                      </span>
+                      <span className="text-xs text-zinc-600 bg-zinc-800/50 px-2 py-0.5 rounded" data-testid={`text-server-ip-iface-${index}`}>
+                        {sip.interface}
+                      </span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => copyServerIp(sip.address, index)}
+                        data-testid={`button-copy-server-ip-${index}`}
+                      >
+                        {copiedServerIndex === index ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 

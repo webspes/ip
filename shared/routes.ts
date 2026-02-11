@@ -40,6 +40,7 @@ export const api = {
       path: '/api/server-ip' as const,
       responses: {
         200: z.object({
+          outboundIp: z.string().nullable(),
           ips: z.array(z.object({
             address: z.string(),
             type: z.string(),

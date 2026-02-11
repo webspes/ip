@@ -16,6 +16,8 @@ const translations: Record<string, Record<string, string>> = {
     "results.available": "Available",
     "results.taken": "Taken",
     "server.title": "Server Identity",
+    "server.outbound": "Outbound IP",
+    "server.interfaces": "Network Interfaces",
   },
   no: {
     "header.title": "IP-adresse",
@@ -34,6 +36,8 @@ const translations: Record<string, Record<string, string>> = {
     "results.available": "Ledig",
     "results.taken": "Opptatt",
     "server.title": "Serverens identitet",
+    "server.outbound": "Utgående IP",
+    "server.interfaces": "Nettverksgrensesnitt",
   },
 };
 
