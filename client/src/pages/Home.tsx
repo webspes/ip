@@ -39,9 +39,7 @@ export default function Home() {
         >
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-zinc-900/50 border border-zinc-800 mb-6">
             <Terminal className="w-6 h-6 text-primary mr-3" />
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">
-              NameForge AI
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">IP Address</h1>
           </div>
 
           <div className="flex flex-col items-center gap-4">
