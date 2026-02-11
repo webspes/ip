@@ -49,6 +49,12 @@ export async function registerRoutes(
     console.log('✓ Using Replit AI Integrations for OpenAI');
   }
 
+  if (!process.env.DATABASE_URL) {
+    console.warn('\x1b[33m⚠ WARNING: DATABASE_URL is not set. Name idea logging is disabled.\x1b[0m');
+  } else {
+    console.log('✓ Database connected (name idea logging enabled)');
+  }
+
   // Helper to get visitor IPs (from x-forwarded-for only, not the socket which is the server's own interface)
   const getVisitorIps = (req: any): string[] => {
     const forwarded = req.headers['x-forwarded-for'];
