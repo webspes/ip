@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { generateNamesRequestSchema } from './schema';
+export type { GenerateNamesRequest } from './schema';
 
 export const errorSchemas = {
   validation: z.object({

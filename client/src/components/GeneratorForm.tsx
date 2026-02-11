@@ -83,6 +83,12 @@ export function GeneratorForm() {
         </CardContent>
       </Card>
 
+      {error && (
+        <div className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-sm" data-testid="text-generation-error">
+          {error instanceof Error ? error.message : t("error.description")}
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {data && (
           <motion.div 
