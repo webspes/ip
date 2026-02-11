@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
-  const [copied, setCopied] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const copyIp = () => {
-    if (!ipData?.ip) return;
-    navigator.clipboard.writeText(ipData.ip);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const ips = ipData?.ip ? ipData.ip.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+
+  const copyIp = (ip: string, index: number) => {
+    navigator.clipboard.writeText(ip);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   if (isLoading) {
@@ -56,19 +57,23 @@ export default function Home() {
             <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
               Visitor Identity
             </span>
-            <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
-              <div className={`w-2.5 h-2.5 rounded-full ${ipData.isAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-              <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid="text-ip-address">
-                {ipData.ip}
-              </span>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={copyIp}
-                data-testid="button-copy-ip"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-              </Button>
+            <div className="flex flex-col items-center gap-2">
+              {ips.map((ip: string, index: number) => (
+                <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
+                  <div className={`w-2.5 h-2.5 rounded-full ${ipData.isAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                  <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-ip-address-${index}`}>
+                    {ip}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => copyIp(ip, index)}
+                    data-testid={`button-copy-ip-${index}`}
+                  >
+                    {copiedIndex === index ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              ))}
             </div>
             {ipData.isAllowed && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">
