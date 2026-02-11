@@ -2,11 +2,11 @@
 
 ## Overview
 
-This is an **AI-powered domain name generator** application. Users describe a project or topic, and the app uses OpenAI to generate creative name suggestions, then checks domain availability via DNS lookups. The app features IP-based access control — only a specific allowed IP address can use the name generator form. It includes basic internationalization (English and Norwegian) and a dark developer-themed UI.
+This is an **IP address display and AI-powered domain name generator** application. It shows visitor and server IP addresses with type classification, and when the visitor's IP matches the `ALLOWED_IP` environment variable, unlocks a form that uses OpenAI to generate website name suggestions and check their domain availability via DNS resolution. The app requires no database — it is fully stateless with optional file-based logging.
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language (Norwegian).
 
 ## System Architecture
 
@@ -34,7 +34,8 @@ The project follows a **monorepo pattern** with three main directories:
 - **Framework:** Express.js (v5) running on Node.js with TypeScript (executed via `tsx`)
 - **API Pattern:** RESTful JSON API under `/api/` prefix
 - **Key Endpoints:**
-  - `GET /api/ip` — Returns visitor's IP address and whether they're allowed to use the generator
+  - `GET /api/ip` — Returns visitor's IP addresses (from x-forwarded-for), type classification, and access status
+  - `GET /api/server-ip` — Returns server's outbound public IP (via ipify.org) and network interface IPs
   - `POST /api/names/generate` — Accepts a topic and count, generates names via OpenAI, checks domain availability via DNS
 - **IP Access Control:** The `ALLOWED_IP` environment variable restricts who can use the name generator. The server compares the request IP against this value.
 - **AI Integration:** OpenAI API (supports both direct `OPENAI_API_KEY` and Replit AI Integrations via `AI_INTEGRATIONS_OPENAI_API_KEY`)
@@ -42,28 +43,14 @@ The project follows a **monorepo pattern** with three main directories:
 
 ### Shared Layer
 
-- **Schema definitions** in `shared/schema.ts` using Drizzle ORM with Zod validation via `drizzle-zod`
+- **Request schemas** in `shared/schema.ts` using Zod for validation
 - **Route contracts** in `shared/routes.ts` — defines API paths, methods, and response schemas using Zod, ensuring type-safe API communication between client and server
-- **Chat models** in `shared/models/chat.ts` — additional tables for conversations and messages (used by Replit integration modules)
 
 ### Data Storage
 
-- **Database:** PostgreSQL via `DATABASE_URL` environment variable
-- **ORM:** Drizzle ORM with `node-postgres` driver
-- **Schema push:** `npm run db:push` uses `drizzle-kit push` to sync schema to database
-- **Main table:** `name_ideas` — logs generated names with prompt, generated name, availability status, and timestamp
-- **Additional tables:** `conversations` and `messages` (for chat integration features)
-- **Storage pattern:** `server/storage.ts` defines an `IStorage` interface with a `DatabaseStorage` implementation
-
-### Replit Integration Modules
-
-The `server/replit_integrations/` and `client/replit_integrations/` directories contain pre-built modules for:
-- **Audio/Voice:** Voice recording, streaming audio playback, speech-to-text, text-to-speech
-- **Chat:** Conversation CRUD with OpenAI streaming
-- **Image:** Image generation via OpenAI's gpt-image-1 model
-- **Batch:** Batch processing with rate limiting and retries
-
-These are utility modules available for use but not all are actively wired into the main application routes.
+- **No database required** — the app is fully stateless
+- **File logging:** `server/storage.ts` appends generated name ideas to `name_ideas.log` as JSON lines (one entry per line)
+- **Logging is best-effort** — failures are silently ignored
 
 ### Development vs Production
 
@@ -72,22 +59,21 @@ These are utility modules available for use but not all are actively wired into 
 
 ## External Dependencies
 
-### Required Environment Variables
-- `DATABASE_URL` — PostgreSQL connection string (required)
-- `ALLOWED_IP` — IP address allowed to access the name generator (optional but recommended)
-- `OPENAI_API_KEY` or `AI_INTEGRATIONS_OPENAI_API_KEY` — OpenAI API key for name generation (one required for AI features)
+### Environment Variables
+- `ALLOWED_IP` — IP address allowed to access the name generator (optional)
+- `OPENAI_API_KEY` or `AI_INTEGRATIONS_OPENAI_API_KEY` — OpenAI API key for name generation (optional, needed for AI features)
 - `AI_INTEGRATIONS_OPENAI_BASE_URL` — Custom base URL when using Replit AI Integrations
 
 ### Third-Party Services
 - **OpenAI API** — Powers the AI name generation (GPT models)
 - **DNS lookups** — Used server-side (`dns/promises`) to check domain availability
+- **ipify.org** — Used to detect server's outbound public IP
 
 ### Key npm Dependencies
 - `express` v5 — HTTP server
-- `drizzle-orm` + `drizzle-kit` — Database ORM and migration tooling
 - `openai` — OpenAI SDK
 - `@tanstack/react-query` — Server state management
 - `wouter` — Client-side routing
 - `framer-motion` — Animations
-- `zod` + `drizzle-zod` — Schema validation
+- `zod` — Schema validation
 - `shadcn/ui` ecosystem — Radix UI, class-variance-authority, tailwind-merge, clsx
