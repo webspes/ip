@@ -1,0 +1,100 @@
+import { useIp } from "@/hooks/use-ip";
+import { GeneratorForm } from "@/components/GeneratorForm";
+import { Loader2, ShieldAlert, ShieldCheck, Terminal } from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function Home() {
+  const { data: ipData, isLoading, error } = useIp();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !ipData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black p-4">
+        <div className="text-center space-y-4">
+          <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
+          <h1 className="text-2xl font-bold text-white">Connection Error</h1>
+          <p className="text-zinc-400">Unable to verify your IP address.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24">
+        
+        {/* Header Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-16 space-y-6"
+        >
+          <div className="inline-flex items-center justify-center p-3 rounded-full bg-zinc-900/50 border border-zinc-800 mb-6">
+            <Terminal className="w-6 h-6 text-primary mr-3" />
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">
+              NameForge AI
+            </h1>
+          </div>
+
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
+              Visitor Identity
+            </span>
+            <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
+              <div className={`w-2.5 h-2.5 rounded-full ${ipData.isAllowed ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className="font-mono text-lg sm:text-xl text-zinc-200">
+                {ipData.ip}
+              </span>
+            </div>
+            {ipData.isAllowed ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">
+                <ShieldCheck className="w-3 h-3" />
+                Authorized Access
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500 bg-red-500/10 px-2 py-1 rounded">
+                <ShieldAlert className="w-3 h-3" />
+                Access Restricted
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Main Content */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          {ipData.isAllowed ? (
+            <GeneratorForm />
+          ) : (
+            <div className="max-w-md mx-auto text-center space-y-6 p-8 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20">
+              <ShieldAlert className="w-12 h-12 text-zinc-600 mx-auto" />
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-white">Access Denied</h2>
+                <p className="text-zinc-400">
+                  Your IP address does not match the allowed configuration. 
+                  This tool is restricted to authorized personnel only.
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+        
+        {/* Footer */}
+        <footer className="mt-24 text-center text-zinc-600 text-sm">
+          <p>Powered by OpenAI & Whois API</p>
+        </footer>
+      </div>
+    </div>
+  );
+}
