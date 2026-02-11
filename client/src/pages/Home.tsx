@@ -92,10 +92,6 @@ export default function Home() {
           {ipData.isAllowed && <GeneratorForm />}
         </motion.div>
         
-        {/* Footer */}
-        <footer className="mt-24 text-center text-zinc-600 text-sm">
-          <p>Powered by humans</p>
-        </footer>
       </div>
     </div>
   );
