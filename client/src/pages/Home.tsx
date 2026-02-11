@@ -8,8 +8,20 @@ import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { api } from "@shared/routes";
 
+function useAppConfig() {
+  return useQuery({
+    queryKey: [api.config.get.path],
+    queryFn: async () => {
+      const res = await fetch(api.config.get.path);
+      if (!res.ok) return { favicon: null, logo: null };
+      return api.config.get.responses[200].parse(await res.json());
+    },
+  });
+}
+
 export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
+  const { data: config } = useAppConfig();
   const { data: serverData } = useQuery({
     queryKey: [api.server.get.path],
     queryFn: async () => {
@@ -70,7 +82,11 @@ export default function Home() {
           className="text-center mb-16 space-y-6"
         >
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-zinc-900/50 border border-zinc-800 mb-6">
-            <Terminal className="w-6 h-6 text-primary mr-3" />
+            {config?.logo ? (
+              <img src={config.logo} alt="Logo" className="h-8 w-auto mr-3" data-testid="img-app-logo" />
+            ) : (
+              <Terminal className="w-6 h-6 text-primary mr-3" />
+            )}
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">{t("header.title")}</h1>
           </div>
 

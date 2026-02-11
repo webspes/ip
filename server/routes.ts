@@ -64,6 +64,13 @@ export async function registerRoutes(
     return ips.length > 0 ? ips : ['unknown'];
   };
 
+  app.get(api.config.get.path, (_req, res) => {
+    res.json({
+      favicon: process.env.APPHOST_FAV || null,
+      logo: process.env.APPHOST_LOGO || null,
+    });
+  });
+
   app.get(api.ip.get.path, (req, res) => {
     const ips = getVisitorIps(req);
     const allowedIp = process.env.ALLOWED_IP;

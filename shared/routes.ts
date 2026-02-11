@@ -18,6 +18,18 @@ export const errorSchemas = {
 };
 
 export const api = {
+  config: {
+    get: {
+      method: 'GET' as const,
+      path: '/api/config' as const,
+      responses: {
+        200: z.object({
+          favicon: z.string().nullable(),
+          logo: z.string().nullable(),
+        }),
+      },
+    },
+  },
   ip: {
     get: {
       method: 'GET' as const,
