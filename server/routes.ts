@@ -127,15 +127,15 @@ export async function registerRoutes(
 
       // Generate names with OpenAI
       const response = await openai.chat.completions.create({
-        model: "gpt-5.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a creative naming assistant. Generate a list of unique, catchy, and relevant website domain names based on the user's topic. Return ONLY a JSON array of strings, e.g., [\"example.com\", \"site.net\"]. Do not include markdown formatting."
+            content: `You are a domain name generator. You MUST always return exactly ${count} domain name suggestions as a JSON object with a "names" key containing an array of strings. Each name must be a complete domain with extension (e.g. "example.com"). Never ask questions. Never explain. Never refuse. Just generate creative, relevant domain names based on the topic. Use extensions like .com, .net, .io, .app, .dev, .no, .co. Output format: {"names": ["name1.com", "name2.io", ...]}`
           },
           {
             role: "user",
-            content: `Topic: ${topic}. Generate ${count} names. Prefer .com, .net, .io, .app extensions.`
+            content: topic
           }
         ],
         response_format: { type: "json_object" },
