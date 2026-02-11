@@ -10,7 +10,7 @@ export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const ips = ipData?.ip ? ipData.ip.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+  const ipDetails = ipData?.ips || [];
 
   const copyIp = (ip: string, index: number) => {
     navigator.clipboard.writeText(ip);
@@ -59,15 +59,18 @@ export default function Home() {
               {t("header.subtitle")}
             </span>
             <div className="flex flex-col items-center gap-2">
-              {ips.map((ip: string, index: number) => (
+              {ipDetails.map((ipInfo, index) => (
                 <div key={index} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg">
                   <span className="font-mono text-lg sm:text-xl text-zinc-200" data-testid={`text-ip-address-${index}`}>
-                    {ip}
+                    {ipInfo.address}
+                  </span>
+                  <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded" data-testid={`text-ip-type-${index}`}>
+                    {ipInfo.type}
                   </span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => copyIp(ip, index)}
+                    onClick={() => copyIp(ipInfo.address, index)}
                     data-testid={`button-copy-ip-${index}`}
                   >
                     {copiedIndex === index ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}

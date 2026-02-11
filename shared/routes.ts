@@ -25,7 +25,11 @@ export const api = {
       responses: {
         200: z.object({ 
           ip: z.string(), 
-          isAllowed: z.boolean() 
+          isAllowed: z.boolean(),
+          ips: z.array(z.object({
+            address: z.string(),
+            type: z.string(),
+          })),
         }),
       },
     },

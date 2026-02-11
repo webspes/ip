@@ -6,39 +6,80 @@ import { z } from "zod";
 import OpenAI from "openai";
 import dns from "dns/promises";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+// Initialize OpenAI client - supports own API key via OPENAI_API_KEY or Replit AI Integrations
+const openaiConfig: { apiKey?: string; baseURL?: string } = {};
+if (process.env.OPENAI_API_KEY) {
+  openaiConfig.apiKey = process.env.OPENAI_API_KEY;
+} else if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+  openaiConfig.apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  openaiConfig.baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+}
+const openai = new OpenAI(openaiConfig);
+
+function classifyIp(ip: string): string {
+  if (ip === '127.0.0.1' || ip === '::1') return 'loopback';
+  if (ip.startsWith('10.')) return 'private (10.x)';
+  if (ip.startsWith('192.168.')) return 'private (192.168.x)';
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(ip)) return 'private (172.16-31.x)';
+  if (ip.startsWith('169.254.')) return 'link-local';
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return 'private (IPv6 ULA)';
+  if (ip.startsWith('fe80')) return 'link-local (IPv6)';
+  if (ip.startsWith('::ffff:')) return classifyIp(ip.slice(7));
+  return 'public';
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  // Helper to get IP
-  const getIp = (req: any) => {
+
+  // Startup checks
+  if (!process.env.ALLOWED_IP) {
+    console.warn('\x1b[33m⚠ WARNING: ALLOWED_IP is not defined in environment variables. The name generator form will not be accessible to anyone.\x1b[0m');
+  } else {
+    console.log(`✓ ALLOWED_IP is set to: ${process.env.ALLOWED_IP}`);
+  }
+
+  if (!openaiConfig.apiKey) {
+    console.warn('\x1b[33m⚠ WARNING: No OpenAI API key found. Set OPENAI_API_KEY or use Replit AI Integrations.\x1b[0m');
+  } else if (process.env.OPENAI_API_KEY) {
+    console.log('✓ Using own OpenAI API key (OPENAI_API_KEY)');
+  } else {
+    console.log('✓ Using Replit AI Integrations for OpenAI');
+  }
+
+  // Helper to get all IPs
+  const getIps = (req: any): string[] => {
     const forwarded = req.headers['x-forwarded-for'];
-    const ip = forwarded ? (typeof forwarded === 'string' ? forwarded : forwarded[0]) : req.socket.remoteAddress;
-    return ip || 'unknown';
+    const ips: string[] = [];
+    if (forwarded) {
+      const parts = typeof forwarded === 'string' ? forwarded : forwarded[0];
+      parts.split(',').map((s: string) => s.trim()).filter(Boolean).forEach((ip: string) => ips.push(ip));
+    }
+    const remote = req.socket.remoteAddress;
+    if (remote && !ips.includes(remote)) ips.push(remote);
+    return ips.length > 0 ? ips : ['unknown'];
   };
 
   app.get(api.ip.get.path, (req, res) => {
-    const ip = getIp(req);
-    // Check against .env allowed IP
+    const ips = getIps(req);
     const allowedIp = process.env.ALLOWED_IP;
-    const isAllowed = !!allowedIp && ip === allowedIp;
+    const isAllowed = !!allowedIp && ips.some(ip => ip === allowedIp);
     
-    res.json({ ip, isAllowed });
+    const ipDetails = ips.map(ip => ({
+      address: ip,
+      type: classifyIp(ip),
+    }));
+
+    res.json({ ip: ips.join(', '), isAllowed, ips: ipDetails });
   });
 
   app.post(api.names.generate.path, async (req, res) => {
     try {
-      const ip = getIp(req);
+      const ips = getIps(req);
       const allowedIp = process.env.ALLOWED_IP;
       
-      if (!allowedIp || ip !== allowedIp) {
+      if (!allowedIp || !ips.some(ip => ip === allowedIp)) {
         return res.status(403).json({ message: "Access denied: IP not allowed" });
       }
 
