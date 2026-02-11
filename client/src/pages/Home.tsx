@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, ShieldAlert, ShieldCheck, Terminal, Copy, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 export default function Home() {
   const { data: ipData, isLoading, error } = useIp();
@@ -30,8 +31,8 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-black p-4">
         <div className="text-center space-y-4">
           <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
-          <h1 className="text-2xl font-bold text-white">Connection Error</h1>
-          <p className="text-zinc-400">Unable to verify your IP address.</p>
+          <h1 className="text-2xl font-bold text-white">{t("error.title")}</h1>
+          <p className="text-zinc-400">{t("error.description")}</p>
         </div>
       </div>
     );
@@ -50,12 +51,12 @@ export default function Home() {
         >
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-zinc-900/50 border border-zinc-800 mb-6">
             <Terminal className="w-6 h-6 text-primary mr-3" />
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">IP Address</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight glow-text">{t("header.title")}</h1>
           </div>
 
           <div className="flex flex-col items-center gap-4">
             <span className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
-              Visitor Identity
+              {t("header.subtitle")}
             </span>
             <div className="flex flex-col items-center gap-2">
               {ips.map((ip: string, index: number) => (
@@ -77,7 +78,7 @@ export default function Home() {
             {ipData.isAllowed && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">
                 <ShieldCheck className="w-3 h-3" />
-                Authorized Access
+                {t("header.authorized")}
               </span>
             )}
           </div>

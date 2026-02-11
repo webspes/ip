@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Sparkles, CheckCircle2, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { t } from "@/lib/i18n";
 
 export function GeneratorForm() {
   const [topic, setTopic] = useState("");
@@ -24,21 +25,21 @@ export function GeneratorForm() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Sparkles className="w-5 h-5 text-primary" />
-            AI Name Generator
+            {t("form.title")}
           </CardTitle>
           <CardDescription>
-            Describe your project and let AI check domain availability for you.
+            {t("form.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="topic" className="text-sm font-medium text-zinc-300">
-                Instructions / Topic
+                {t("form.topic.label")}
               </label>
               <Textarea
                 id="topic"
-                placeholder="e.g., A minimalist coffee shop for developers in Oslo..."
+                placeholder={t("form.topic.placeholder")}
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 className="min-h-[120px] text-base"
@@ -49,7 +50,7 @@ export function GeneratorForm() {
 
             <div className="space-y-2">
               <label htmlFor="count" className="text-sm font-medium text-zinc-300">
-                How many names? (1-100)
+                {t("form.count.label")}
               </label>
               <Input
                 id="count"
@@ -72,10 +73,10 @@ export function GeneratorForm() {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating & Checking Domains...
+                  {t("form.loading")}
                 </>
               ) : (
-                "Generate Names"
+                t("form.submit")
               )}
             </Button>
           </form>
@@ -90,7 +91,7 @@ export function GeneratorForm() {
             exit={{ opacity: 0, y: -20 }}
             className="grid gap-3"
           >
-            <h3 className="text-lg font-semibold text-white mb-2 pl-1">Results</h3>
+            <h3 className="text-lg font-semibold text-white mb-2 pl-1">{t("results.title")}</h3>
             {data.results.map((result, idx) => (
               <motion.div
                 key={idx}
@@ -116,12 +117,12 @@ export function GeneratorForm() {
                   {result.available ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Available
+                      {t("results.available")}
                     </>
                   ) : (
                     <>
                       <XCircle className="w-3.5 h-3.5" />
-                      Taken
+                      {t("results.taken")}
                     </>
                   )}
                 </div>
