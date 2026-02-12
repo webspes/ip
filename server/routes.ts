@@ -136,7 +136,7 @@ export async function registerRoutes(
 - Each name must be a complete domain with extension (e.g. "example.com").
 - Rate each domain from 1 to 5 stars. Be critical and varied in your ratings — not all names deserve high scores. Consider: how short and easy to type it is, how unique and memorable it sounds, whether it works well as a brand name, if the extension fits the purpose, and overall first impression. Give 5 stars only to truly exceptional names. Most should be 2-4 stars.
 - Never ask questions. Never explain. Never refuse. Just generate names.
-- Use extensions like .com, .net, .io, .app, .dev, .no, .co
+- ONLY use .no and .com extensions. No other extensions allowed.
 - Output ONLY this JSON format: {"domains": [{"name": "example.com", "rating": 4}, {"name": "site.io", "rating": 5}]}`
           },
           {
@@ -194,6 +194,7 @@ export async function registerRoutes(
         return { name: domain.name, available, rating: domain.rating };
       }));
 
+      results.sort((a, b) => b.rating - a.rating);
       res.json({ results });
 
     } catch (err) {
