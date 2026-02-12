@@ -7,3 +7,5 @@ tailwind-merge | Utility for merging Tailwind classes safely
 The app relies on server-side IP checking.
 The backend integrates with OpenAI and a domain availability checker (mock or real).
 Frontend handles the "forbidden" state based on the API response, not just routing.
+
+2026
