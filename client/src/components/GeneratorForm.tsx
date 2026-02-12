@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, XCircle, ArrowLeft, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { t } from "@/lib/i18n";
 
@@ -54,9 +54,23 @@ export function GeneratorForm({ onHasResults }: GeneratorFormProps) {
                 className="flex items-center justify-between gap-4 px-5 py-4 rounded-md bg-zinc-900/70 border border-zinc-800"
                 data-testid={`row-result-${idx}`}
               >
-                <span className="font-mono text-base text-zinc-100 tracking-tight" data-testid={`text-domain-name-${idx}`}>
-                  {result.name}
-                </span>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="font-mono text-base text-zinc-100 tracking-tight" data-testid={`text-domain-name-${idx}`}>
+                    {result.name}
+                  </span>
+                  <div className="flex items-center gap-0.5" data-testid={`rating-stars-${idx}`}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 ${
+                          star <= result.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-zinc-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
 
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap ${
                   result.available

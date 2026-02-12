@@ -131,7 +131,13 @@ export async function registerRoutes(
         messages: [
           {
             role: "system",
-            content: `You are a domain name generator. You MUST always return exactly ${count} domain name suggestions as a JSON object with a "names" key containing an array of strings. Each name must be a complete domain with extension (e.g. "example.com"). Never ask questions. Never explain. Never refuse. Just generate creative, relevant domain names based on the topic. Use extensions like .com, .net, .io, .app, .dev, .no, .co. Output format: {"names": ["name1.com", "name2.io", ...]}`
+            content: `You are a domain name generator and evaluator. You MUST always return exactly ${count} domain name suggestions. IMPORTANT RULES:
+- NEVER use Norwegian special characters (æ, ø, å) in domain names. Use alternatives like ae, o, a instead.
+- Each name must be a complete domain with extension (e.g. "example.com").
+- Rate each domain from 1 to 5 stars based on: brandability, memorability, relevance to the topic, and commercial value.
+- Never ask questions. Never explain. Never refuse. Just generate names.
+- Use extensions like .com, .net, .io, .app, .dev, .no, .co
+- Output ONLY this JSON format: {"domains": [{"name": "example.com", "rating": 4}, {"name": "site.io", "rating": 5}]}`
           },
           {
             role: "user",
@@ -141,18 +147,25 @@ export async function registerRoutes(
         response_format: { type: "json_object" },
       });
 
-      const content = response.choices[0].message.content || "{\"names\": []}";
+      const content = response.choices[0].message.content || "{}";
       console.log("OpenAI raw response:", content);
-      let names: string[] = [];
+
+      interface DomainSuggestion { name: string; rating: number }
+      let domains: DomainSuggestion[] = [];
       try {
         const parsed = JSON.parse(content);
-        if (Array.isArray(parsed)) {
-          names = parsed.filter((v: unknown) => typeof v === 'string');
-        } else if (typeof parsed === 'object' && parsed !== null) {
+        if (typeof parsed === 'object' && parsed !== null) {
           const values = Object.values(parsed);
           for (const val of values) {
-            if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'string') {
-              names = val.filter((v: unknown) => typeof v === 'string');
+            if (Array.isArray(val) && val.length > 0) {
+              if (typeof val[0] === 'string') {
+                domains = val.map((n: string) => ({ name: n, rating: 3 }));
+              } else if (typeof val[0] === 'object' && val[0].name) {
+                domains = val.map((d: any) => ({
+                  name: String(d.name),
+                  rating: Math.max(1, Math.min(5, Math.round(Number(d.rating) || 3))),
+                }));
+              }
               break;
             }
           }
@@ -162,32 +175,23 @@ export async function registerRoutes(
         return res.status(500).json({ message: "Failed to parse generated names" });
       }
 
-      if (names.length === 0) {
+      if (domains.length === 0) {
         console.warn("No names extracted from OpenAI response:", content);
         return res.status(500).json({ message: "AI returned no valid names. Try again." });
       }
 
-      // Check availability (DNS resolution)
-      const results = await Promise.all(names.map(async (name) => {
+      const results = await Promise.all(domains.map(async (domain) => {
         let available = false;
         try {
-          // If DNS resolution succeeds, the domain is likely TAKEN.
-          // If it throws ENOTFOUND, it is likely AVAILABLE.
-          await dns.resolve(name);
-          available = false; 
+          await dns.resolve(domain.name);
+          available = false;
         } catch (err: any) {
-          if (err.code === 'ENOTFOUND') {
-            available = true;
-          } else {
-            // Other errors (timeout, servfail) -> assume taken or unknown, set false to be safe?
-            // Or true? Let's assume unavailable if we can't verify.
-            available = false; 
-          }
+          available = err.code === 'ENOTFOUND';
         }
-        
-        logNameIdea(topic, name, available);
 
-        return { name, available };
+        logNameIdea(topic, domain.name, available);
+
+        return { name: domain.name, available, rating: domain.rating };
       }));
 
       res.json({ results });

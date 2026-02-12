@@ -73,6 +73,7 @@ export const api = {
           results: z.array(z.object({
             name: z.string(),
             available: z.boolean(),
+            rating: z.number().min(1).max(5),
           })),
         }),
         403: errorSchemas.forbidden,
