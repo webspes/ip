@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { generateNamesRequestSchema } from './schema';
-export type { GenerateNamesRequest } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -60,24 +58,6 @@ export const api = {
             interface: z.string(),
           })),
         }),
-      },
-    },
-  },
-  names: {
-    generate: {
-      method: 'POST' as const,
-      path: '/api/names/generate' as const,
-      input: generateNamesRequestSchema,
-      responses: {
-        200: z.object({
-          results: z.array(z.object({
-            name: z.string(),
-            available: z.boolean(),
-            rating: z.number().min(1).max(5),
-          })),
-        }),
-        403: errorSchemas.forbidden,
-        400: errorSchemas.validation,
       },
     },
   },

@@ -1,9 +1,8 @@
 import { useIp } from "@/hooks/use-ip";
-import { GeneratorForm } from "@/components/GeneratorForm";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, ShieldAlert, ShieldCheck, Terminal, Server, Copy, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { api } from "@shared/routes";
@@ -33,7 +32,6 @@ export default function Home() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedServerIndex, setCopiedServerIndex] = useState<number | null>(null);
   const [copiedOutbound, setCopiedOutbound] = useState(false);
-  const [showingResults, setShowingResults] = useState(false);
 
   const ipDetails = ipData?.ips || [];
   const serverIps = serverData?.ips || [];
@@ -85,16 +83,13 @@ export default function Home() {
           </motion.div>
         )}
 
-        <AnimatePresence mode="wait">
-          {!showingResults && (
-            <motion.div
-              key="ip-section"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
-              transition={{ duration: 0.4 }}
-              className="space-y-10 mb-10"
-            >
+        <motion.div
+          key="ip-section"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-10 mb-10"
+        >
               <div className="text-center space-y-5">
                 {!config?.logo && (
                   <div className="inline-flex items-center justify-center gap-3 p-3 rounded-full bg-zinc-900/50 border border-zinc-800">
@@ -190,19 +185,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {ipData.isAllowed && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
-          >
-            <GeneratorForm onHasResults={setShowingResults} />
-          </motion.div>
-        )}
+        </motion.div>
 
       </div>
     </div>
