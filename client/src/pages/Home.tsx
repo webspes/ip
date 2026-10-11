@@ -1,10 +1,10 @@
 import { useIp } from "@/hooks/use-ip";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShieldAlert, ShieldCheck, Terminal, Server, Copy, Check } from "lucide-react";
+import { Loader2, ShieldAlert, ShieldCheck, Terminal, Server, Copy, Check, Globe, Network, AtSign, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { t } from "@/lib/i18n";
+import { t, currentLang } from "@/lib/i18n";
 import { api } from "@shared/routes";
 
 function useAppConfig() {
@@ -131,6 +131,11 @@ export default function Home() {
                 </div>
               </div>
 
+              <DetailsGrid data={ipData} />
+              <Ipv6Check />
+              <BrowserCard />
+              <TerminalBox />
+
               {(outboundIp || serverIps.length > 0) && (
                 <div className="text-center space-y-3">
                   <div className="inline-flex items-center gap-2">
@@ -187,6 +192,131 @@ export default function Home() {
               )}
         </motion.div>
 
+        <footer className="text-center text-xs text-zinc-500 space-y-1 pt-6 border-t border-zinc-900">
+          <p>{t("footer.by")} <a href="https://webspesialisten.no" className="text-zinc-300 hover:text-white underline-offset-2 hover:underline">Webspesialisten</a></p>
+          <p><a href="https://db-ip.com" className="hover:text-zinc-300">{t("footer.dbip")}</a></p>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+const card = "rounded-lg bg-zinc-900/60 border border-zinc-800 p-4";
+
+/** Regional-indicator emoji flag from an ISO country code. */
+function flag(code?: string | null) {
+  return code && /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...code.split("").map((c) => 0x1f1a5 + c.charCodeAt(0))) : "";
+}
+
+function DetailsGrid({ data }: { data: { version?: number | null; hostname?: string | null; country?: string | null; countryCode?: string | null; asn?: number | null; org?: string | null } }) {
+  const countryName = (() => {
+    if (!data.countryCode) return data.country;
+    try { return new Intl.DisplayNames([currentLang === "no" ? "nb" : "en"], { type: "region" }).of(data.countryCode) || data.country; } catch { return data.country; }
+  })();
+  const rows: [typeof Globe, string, string][] = [
+    [Globe, t("details.country"), countryName ? `${flag(data.countryCode)} ${countryName}` : t("details.unknown")],
+    [Network, t("details.network"), data.org ? `${data.org}${data.asn ? ` (AS${data.asn})` : ""}` : t("details.unknown")],
+    [AtSign, t("details.hostname"), data.hostname || t("details.none")],
+    [Terminal, t("details.version"), data.version ? `IPv${data.version}` : t("details.unknown")],
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 text-left">
+      {rows.map(([Icon, label, value]) => (
+        <div key={label} className={card}>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 mb-1"><Icon className="w-3.5 h-3.5" /> {label}</div>
+          <div className="font-mono text-sm text-zinc-200 break-all" data-testid={`text-${label}`}>{value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Opt-in: the server has no IPv6, so ask an IPv6-only endpoint from the browser. */
+function Ipv6Check() {
+  const [state, setState] = useState<"idle" | "busy" | "none" | string>("idle");
+  const run = async () => {
+    setState("busy");
+    try {
+      const res = await fetch("https://api6.ipify.org?format=json", { signal: AbortSignal.timeout(6000) });
+      const d = await res.json();
+      setState(d.ip || "none");
+    } catch {
+      setState("none");
+    }
+  };
+  return (
+    <div className={`${card} text-left flex flex-wrap items-center gap-3`}>
+      <div className="flex-1 min-w-[200px]">
+        <div className="text-xs uppercase tracking-widest text-zinc-500 mb-1">{t("ipv6.title")}</div>
+        {state === "idle" || state === "busy" ? <p className="text-xs text-zinc-500">{t("ipv6.note")}</p>
+          : state === "none" ? <p className="text-sm text-zinc-300">{t("ipv6.none")}</p>
+          : <p className="font-mono text-sm text-zinc-200 break-all">{state}</p>}
+      </div>
+      {(state === "idle" || state === "busy") && (
+        <Button variant="outline" size="sm" onClick={run} disabled={state === "busy"}>{state === "busy" ? t("ipv6.checking") : t("ipv6.check")}</Button>
+      )}
+    </div>
+  );
+}
+
+function parseUa(ua: string) {
+  const m = (re: RegExp) => re.exec(ua)?.[1];
+  const major = (v?: string) => v?.split(".")[0];
+  const browser = m(/Edg\/([\d.]+)/) ? `Edge ${major(m(/Edg\/([\d.]+)/))}`
+    : m(/OPR\/([\d.]+)/) ? `Opera ${major(m(/OPR\/([\d.]+)/))}`
+    : m(/Firefox\/([\d.]+)/) ? `Firefox ${major(m(/Firefox\/([\d.]+)/))}`
+    : m(/Chrome\/([\d.]+)/) ? `Chrome ${major(m(/Chrome\/([\d.]+)/))}`
+    : m(/Version\/([\d.]+).*Safari/) ? `Safari ${m(/Version\/([\d.]+).*Safari/)!.split(".").slice(0, 2).join(".")}`
+    : "–";
+  const os = /iPhone|iPad/.test(ua) ? `iOS ${m(/OS (\d+)_/) ?? ""}`.trim()
+    : m(/Android ([\d.]+)/) ? `Android ${m(/Android ([\d.]+)/)}`
+    : /Windows NT 10/.test(ua) ? "Windows 10/11"
+    : /Mac OS X/.test(ua) ? "macOS"
+    : /Linux/.test(ua) ? "Linux" : "–";
+  return { browser, os };
+}
+
+function BrowserCard() {
+  const { browser, os } = parseUa(navigator.userAgent);
+  const rows: [string, string][] = [
+    [t("browser.browser"), browser],
+    [t("browser.os"), os],
+    [t("browser.language"), navigator.languages?.slice(0, 3).join(", ") || navigator.language],
+    [t("browser.screen"), `${window.screen.width}×${window.screen.height} @${window.devicePixelRatio}x`],
+    [t("browser.timezone"), Intl.DateTimeFormat().resolvedOptions().timeZone],
+  ];
+  return (
+    <div className={`${card} text-left`}>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 mb-2"><Monitor className="w-3.5 h-3.5" /> {t("browser.title")}</div>
+      <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-sm">
+        {rows.map(([k, v]) => <Fragment key={k}><dt className="text-zinc-500">{k}</dt><dd className="text-zinc-200">{v}</dd></Fragment>)}
+      </dl>
+      <p className="mt-2 font-mono text-[11px] text-zinc-500 break-all">{navigator.userAgent}</p>
+    </div>
+  );
+}
+
+function TerminalBox() {
+  const host = window.location.host;
+  const lines: [string, string][] = [
+    [t("terminal.ip"), `curl ${host}`],
+    [t("terminal.json"), `curl ${host}/json`],
+    [t("terminal.v4"), `curl ${host}/ipv4`],
+  ];
+  const [copied, setCopied] = useState<string | null>(null);
+  return (
+    <div className={`${card} text-left`}>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 mb-2"><Terminal className="w-3.5 h-3.5" /> {t("terminal.title")}</div>
+      <div className="space-y-2">
+        {lines.map(([label, cmd]) => (
+          <div key={cmd} className="flex items-center gap-3">
+            <span className="text-xs text-zinc-500 w-32 shrink-0">{label}</span>
+            <code className="flex-1 font-mono text-sm text-emerald-300 bg-black/40 rounded px-2 py-1 overflow-x-auto whitespace-nowrap">$ {cmd}</code>
+            <Button size="icon" variant="ghost" aria-label={`Copy ${cmd}`} onClick={() => { navigator.clipboard.writeText(cmd); setCopied(cmd); setTimeout(() => setCopied(null), 1500); }}>
+              {copied === cmd ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
+        ))}
       </div>
     </div>
   );
