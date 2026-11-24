@@ -66,6 +66,9 @@ export async function refreshGeo(): Promise<void> {
 export function startGeo(): void {
   load("country");
   load("asn");
+  // Atomic-publish smoke test (PAAS_SMOKE_TEST=1) runs briefly next to the live app on the same database:
+  // start no background jobs there.
+  if (process.env.PAAS_SMOKE_TEST === "1") return;
   void refreshGeo();
   setInterval(() => void refreshGeo(), 24 * 3600_000).unref();
 }
